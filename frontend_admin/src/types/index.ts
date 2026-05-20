@@ -96,11 +96,16 @@ export interface Region {
   id: string
   villageName: string
   myanmarDescription: string
+  township?: string
   activeUsers: number
   revenue: number
   coverage: number
   lat?: number
   lng?: number
+  status?: 'active' | 'maintenance' | 'planned'
+  estimatedCoverageRadius?: number
+  fiberDistance?: number
+  signalQuality?: number
 }
 
 export interface Employee {
