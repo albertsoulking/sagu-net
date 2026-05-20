@@ -1,8 +1,9 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type {
+  IspUser,
   OnuConnectionStatus,
   SubscriberAccountStatus,
   SubscriberAccountType,
@@ -45,28 +46,6 @@ export function UserDetailPage() {
   const { userId } = useParams<{ userId: string }>()
   const navigate = useNavigate()
   const user = useUsersStore((s) => (userId ? s.getById(userId) : undefined))
-  const updateUser = useUsersStore((s) => s.updateUser)
-  const deleteUser = useUsersStore((s) => s.deleteUser)
-
-  const [notesDraft, setNotesDraft] = useState('')
-  useEffect(() => {
-    setNotesDraft(user?.notes ?? '')
-  }, [user?.notes, user?.id])
-
-  const [renewOpen, setRenewOpen] = useState(false)
-  const [renewMonths, setRenewMonths] = useState(1)
-  const [upgradeOpen, setUpgradeOpen] = useState(false)
-  const [upgradePlan, setUpgradePlan] = useState('')
-  const [typeOpen, setTypeOpen] = useState(false)
-  const [statusOpen, setStatusOpen] = useState(false)
-  const [onuOpen, setOnuOpen] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-
-  const upgradeEstimate = useMemo(() => {
-    if (!user || !upgradePlan) return 0
-    const m = Math.max(1, user.months)
-    return subscriptionBaseAmount(upgradePlan, m, mockPackages) + (user.adjustmentAmount ?? 0)
-  }, [user, upgradePlan])
 
   if (!userId) {
     navigate('/users')
@@ -84,17 +63,57 @@ export function UserDetailPage() {
     )
   }
 
-  const saveNotes = () => {
-    updateUser(user.id, { notes: notesDraft || undefined })
-    toast.success('Notes saved')
-  }
+  return (
+    <UserDetailPanel
+      user={user}
+      showBackLink
+      onDeleted={() => navigate('/users')}
+    />
+  )
+}
+
+interface UserDetailPanelProps {
+  user: IspUser
+  showBackLink?: boolean
+  onDeleted?: () => void
+}
+
+export function UserDetailPanel({ user, showBackLink = false, onDeleted }: UserDetailPanelProps) {
+  const updateUser = useUsersStore((s) => s.updateUser)
+  const deleteUser = useUsersStore((s) => s.deleteUser)
+
+  const [renewOpen, setRenewOpen] = useState(false)
+  const [renewMonths, setRenewMonths] = useState(1)
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
+  const [upgradePlan, setUpgradePlan] = useState('')
+  const [typeOpen, setTypeOpen] = useState(false)
+  const [statusOpen, setStatusOpen] = useState(false)
+  const [onuOpen, setOnuOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+
+  const upgradeEstimate = useMemo(() => {
+    if (!upgradePlan) return 0
+    const m = Math.max(1, user.months)
+    return subscriptionBaseAmount(upgradePlan, m, mockPackages) + (user.adjustmentAmount ?? 0)
+  }, [user, upgradePlan])
+
+  const renewalPreview = useMemo(
+    () => computeRenewalEndAndDays(user.endDate, renewMonths),
+    [user, renewMonths],
+  )
+
+  const renewalEstimate = useMemo(() => {
+    const base = user.userType === 'foc' ? 0 : subscriptionBaseAmount(user.plan, renewMonths, mockPackages)
+    return base + (user.adjustmentAmount ?? 0)
+  }, [user, renewMonths])
 
   const runRenew = () => {
-    const { endDate, remainingDays } = computeRenewalEndAndDays(user.endDate, renewMonths)
+    const { endDate, remainingDays } = renewalPreview
     let status: SubscriberAccountStatus = user.status
     if (remainingDays >= 0) status = 'active'
     updateUser(user.id, {
       endDate,
+      billingEndDate: endDate,
       remainingDays,
       months: renewMonths,
       status,
@@ -132,22 +151,24 @@ export function UserDetailPage() {
     deleteUser(user.id)
     setDeleteOpen(false)
     toast.success('User removed')
-    navigate('/users')
+    onDeleted?.()
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <Link
-            to="/users"
-            className="mb-3 inline-flex items-center gap-1 text-sm text-primary-600 hover:underline"
-          >
-            <ArrowLeft className="h-4 w-4" /> Users
-          </Link>
-          <PageHeader title={user.id} description="Subscriber profile and network actions" />
+      {showBackLink && (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <Link
+              to="/users"
+              className="mb-3 inline-flex items-center gap-1 text-sm text-primary-600 hover:underline"
+            >
+              <ArrowLeft className="h-4 w-4" /> Users
+            </Link>
+            <PageHeader title={user.id} description="Subscriber profile and network actions" />
+          </div>
         </div>
-      </div>
+      )}
 
       <Card>
         <h2 className="mb-4 text-lg font-semibold">Profile</h2>
@@ -199,13 +220,11 @@ export function UserDetailPage() {
             <dd className="font-medium">{formatDate(user.registrationDate)}</dd>
           </div>
         </dl>
-        <div className="mt-6">
-          <Label className="mb-1.5 block">Notes</Label>
-          <Textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={3} />
-          <Button className="mt-2" size="sm" type="button" onClick={saveNotes}>
-            Save notes
-          </Button>
-        </div>
+        <UserNotesEditor
+          key={user.id}
+          user={user}
+          onSave={(notes) => updateUser(user.id, { notes })}
+        />
       </Card>
 
       <Card>
@@ -311,6 +330,19 @@ export function UserDetailPage() {
                 ))}
               </SelectContent>
             </Select>
+            {renewalPreview && (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-900/50">
+                <p className="text-slate-600 dark:text-slate-400">
+                  New end date: <strong>{formatDate(renewalPreview.endDate)}</strong>
+                </p>
+                <p className="text-slate-600 dark:text-slate-400">
+                  Day left: <strong>{renewalPreview.remainingDays}</strong>
+                </p>
+                <p className="mt-2 font-semibold text-primary-600">
+                  Renewal amount: {formatCurrency(renewalEstimate)}
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRenewOpen(false)}>Cancel</Button>
@@ -412,6 +444,31 @@ export function UserDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+function UserNotesEditor({
+  user,
+  onSave,
+}: {
+  user: IspUser
+  onSave: (notes: string | undefined) => void
+}) {
+  const [notesDraft, setNotesDraft] = useState(user.notes ?? '')
+
+  const saveNotes = () => {
+    onSave(notesDraft || undefined)
+    toast.success('Notes saved')
+  }
+
+  return (
+    <div className="mt-6">
+      <Label className="mb-1.5 block">Notes</Label>
+      <Textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={3} />
+      <Button className="mt-2" size="sm" type="button" onClick={saveNotes}>
+        Save notes
+      </Button>
     </div>
   )
 }

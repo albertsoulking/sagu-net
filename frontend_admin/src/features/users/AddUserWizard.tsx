@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm, Controller, type Resolver } from 'react-hook-form'
+import { useForm, Controller, useWatch, type Resolver } from 'react-hook-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import dayjs from 'dayjs'
@@ -55,13 +55,24 @@ const step2Schema = z.object({
   adjustmentAmount: z.coerce.number().default(0),
 })
 
+const optionalCoord = z.preprocess(
+  (value) => {
+    if (value === '' || value == null) return undefined
+    if (typeof value === 'number' && Number.isNaN(value)) return undefined
+    return value
+  },
+  z.coerce.number().optional(),
+)
+
 const step3Schema = z.object({
   installStaff: z.string().min(1, 'Staff name required'),
   onuMac: z.string().min(1, 'ONU SN/MAC required'),
+  onuType: z.string().min(1, 'ONU type required'),
+  onuStatus: z.enum(['online', 'offline']),
   ponPort: z.string().min(1, 'PON port required'),
   dnSn: z.string().min(1, 'DN/SN required'),
-  latitude: z.coerce.number().optional(),
-  longitude: z.coerce.number().optional(),
+  latitude: optionalCoord,
+  longitude: optionalCoord,
   installBillingType: z.enum(['free', 'standard']),
   installTypeLabel: z.string().min(1),
   cableLength: z.coerce.number().min(0),
@@ -73,6 +84,7 @@ type Step2 = z.infer<typeof step2Schema>
 type Step3 = z.infer<typeof step3Schema>
 
 const steps = ['Basic Info', 'Subscription Info', 'Installation & ONU']
+const onuTypeOptions = ['Huawei', 'ZTE', 'FiberHome', 'TP-Link']
 
 interface AddUserWizardProps {
   open: boolean
@@ -115,6 +127,8 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
     defaultValues: {
       installStaff: mockEmployees[0]?.name ?? '',
       onuMac: '',
+      onuType: onuTypeOptions[0],
+      onuStatus: 'offline',
       ponPort: '',
       dnSn: '',
       latitude: 21.9588,
@@ -126,13 +140,13 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
     },
   })
 
-  const { setValue: setForm2, watch: watchForm2, getValues: getForm2Values } = form2
-  const subMonths = watchForm2('subscriptionMonths')
+  const { setValue: setForm2, getValues: getForm2Values } = form2
+  const subMonths = useWatch({ control: form2.control, name: 'subscriptionMonths' })
   const bundleExtra = useMemo(() => bundledExtraMonths(subMonths), [subMonths])
-  const userTypeWatch = watchForm2('userType')
-  const planWatch = watchForm2('plan')
-  const adjustmentWatch = watchForm2('adjustmentAmount')
-  const billingStartWatch = watchForm2('billingStart')
+  const userTypeWatch = useWatch({ control: form2.control, name: 'userType' })
+  const planWatch = useWatch({ control: form2.control, name: 'plan' })
+  const adjustmentWatch = useWatch({ control: form2.control, name: 'adjustmentAmount' })
+  const billingStartWatch = useWatch({ control: form2.control, name: 'billingStart' })
 
   useEffect(() => {
     const extra = bundledExtraMonths(subMonths)
@@ -150,45 +164,52 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
 
   const renewalDisplay = subLineTotal + (Number(adjustmentWatch) || 0)
 
-  const installBilling = form3.watch('installBillingType')
-  const cableLen = form3.watch('cableLength')
+  const installBilling = useWatch({ control: form3.control, name: 'installBillingType' })
+  const cableLen = useWatch({ control: form3.control, name: 'cableLength' })
+  const cableMeters = Number.isFinite(Number(cableLen)) ? Number(cableLen) : 0
   const installCost = useMemo(
-    () => calculateCableInstallCost(installBilling as InstallBillingType, cableLen),
-    [installBilling, cableLen],
+    () => calculateCableInstallCost(installBilling as InstallBillingType, cableMeters),
+    [installBilling, cableMeters],
   )
 
-  const lat = form3.watch('latitude')
-  const lng = form3.watch('longitude')
+  const lat = useWatch({ control: form3.control, name: 'latitude' })
+  const lng = useWatch({ control: form3.control, name: 'longitude' })
+  const hasCoords = Number.isFinite(lat) && Number.isFinite(lng)
 
-  useEffect(() => {
-    if (!open) {
-      setStep(0)
-      setData1(null)
-      setData2(null)
-      form1.reset()
-      form2.reset({
-        userType: 'premium',
-        plan: mockPackages[0]?.plan ?? '15 Mbps',
-        subscriptionMonths: 1,
-        extraMonthsDisplay: 0,
-        billingStart: dayjs().format('YYYY-MM-DD'),
-        billingEnd: dayjs().add(1, 'month').format('YYYY-MM-DD'),
-        adjustmentAmount: 0,
-      })
-      form3.reset({
-        installStaff: mockEmployees[0]?.name ?? '',
-        onuMac: '',
-        ponPort: '',
-        dnSn: '',
-        latitude: 21.9588,
-        longitude: 96.0891,
-        installBillingType: 'standard',
-        installTypeLabel: 'Standard installation',
-        cableLength: 50,
-        paymentType: 'cash',
-      })
-    }
-  }, [open, form1, form2, form3])
+  const resetWizard = () => {
+    setStep(0)
+    setData1(null)
+    setData2(null)
+    form1.reset()
+    form2.reset({
+      userType: 'premium',
+      plan: mockPackages[0]?.plan ?? '15 Mbps',
+      subscriptionMonths: 1,
+      extraMonthsDisplay: 0,
+      billingStart: dayjs().format('YYYY-MM-DD'),
+      billingEnd: dayjs().add(1, 'month').format('YYYY-MM-DD'),
+      adjustmentAmount: 0,
+    })
+    form3.reset({
+      installStaff: mockEmployees[0]?.name ?? '',
+      onuMac: '',
+      onuType: onuTypeOptions[0],
+      onuStatus: 'offline',
+      ponPort: '',
+      dnSn: '',
+      latitude: 21.9588,
+      longitude: 96.0891,
+      installBillingType: 'standard',
+      installTypeLabel: 'Standard installation',
+      cableLength: 50,
+      paymentType: 'cash',
+    })
+  }
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) resetWizard()
+    onOpenChange(nextOpen)
+  }
 
   const suggestNextId = () => {
     const nums = users
@@ -240,7 +261,6 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
       endDate,
       remainingDays,
       status,
-      onuStatus: 'offline',
       userType: data2.userType,
       registrationDate: dayjs().format('YYYY-MM-DD'),
       notes: data1.notes || undefined,
@@ -250,7 +270,8 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
       port: d3.ponPort,
       cableLength: d3.cableLength,
       onuMac: d3.onuMac,
-      onuType: '—',
+      onuType: d3.onuType,
+      onuStatus: d3.onuStatus,
       installStaff: d3.installStaff,
       installType: d3.installTypeLabel,
       adjustmentAmount: data2.adjustmentAmount,
@@ -261,11 +282,11 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
 
     addUser(user)
     toast.success(`User ${data1.id} created (${d3.paymentType.replace('_', ' ')})`)
-    onOpenChange(false)
+    handleOpenChange(false)
   })
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto sm:max-w-3xl" showClose>
         <DialogHeader>
           <DialogTitle>Add user — step {step + 1} of 3</DialogTitle>
@@ -298,7 +319,6 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
 
         {step === 0 && (
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-            <p className="text-sm text-slate-500">Enter subscriber identity. Fields marked * are required.</p>
             <Input label="User ID *" {...form1.register('id')} error={form1.formState.errors.id?.message} />
             {!form1.getValues('id') && (
               <Button type="button" variant="ghost" size="sm" className="-mt-2" onClick={() => form1.setValue('id', suggestNextId())}>
@@ -325,9 +345,6 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
               <Textarea placeholder="Special cases for admins…" {...form1.register('notes')} />
             </div>
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
               <Button type="button" onClick={onNextFromStep1}>
                 Next
               </Button>
@@ -402,10 +419,10 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
               </div>
               <div>
                 <Label className="mb-1.5 block">Extra promo months (auto)</Label>
-                <Input type="number" readOnly disabled value={bundleExtra} />
+                <Input readOnly disabled value={bundleExtra ? `+${bundleExtra}` : '0'} />
               </div>
               <Input label="Billing start *" type="date" {...form2.register('billingStart')} />
-              <Input label="Billing end *" type="date" {...form2.register('billingEnd')} />
+              <Input label="Billing end *" type="date" readOnly {...form2.register('billingEnd')} />
               <div className="sm:col-span-2">
                 <Input
                   label="Adjustment amount (MMK)"
@@ -488,6 +505,45 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
                 />
               </div>
               <Input label="ONU SN/MAC *" {...form3.register('onuMac')} error={form3.formState.errors.onuMac?.message} />
+              <div>
+                <Label className="mb-1.5 block">ONU type</Label>
+                <Controller
+                  name="onuType"
+                  control={form3.control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {onuTypeOptions.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div>
+                <Label className="mb-1.5 block">ONU status</Label>
+                <Controller
+                  name="onuStatus"
+                  control={form3.control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="online">Online</SelectItem>
+                        <SelectItem value="offline">Offline</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
               <Input label="OLT / PON port *" {...form3.register('ponPort')} error={form3.formState.errors.ponPort?.message} />
               <Input label="DN/SN *" {...form3.register('dnSn')} error={form3.formState.errors.dnSn?.message} />
               <Input
@@ -534,7 +590,7 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
                 Installation fee: <strong>{formatCurrency(installCost.installationFee)}</strong>
               </p>
               <p className="text-slate-600 dark:text-slate-400">
-                Cable over 300m ({Math.max(0, cableLen - 300)}m × 300 MMK):{' '}
+                Cable over 300m ({Math.max(0, cableMeters - 300)}m × 300 MMK):{' '}
                 <strong>{formatCurrency(installCost.cableExtra)}</strong>
               </p>
               <p className="mt-2 font-semibold text-primary-600">Total install: {formatCurrency(installCost.total)}</p>
@@ -543,10 +599,10 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
             <div>
               <Label className="mb-1.5 block">Map preview</Label>
               <MapView
-                center={lat != null && lng != null ? [lat, lng] : undefined}
+                center={hasCoords ? [lat!, lng!] : undefined}
                 markers={
-                  lat != null && lng != null
-                    ? [{ lat, lng, label: data1?.name ?? data1?.id ?? 'Install' }]
+                  hasCoords
+                    ? [{ lat: lat!, lng: lng!, label: data1?.name ?? data1?.id ?? 'Install' }]
                     : []
                 }
                 onClick={(la, lo) => {
@@ -556,7 +612,6 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
                 height="220px"
                 showNoCoordsHint
               />
-              <p className="mt-1 text-xs text-slate-500">Update latitude / longitude to move the pin.</p>
             </div>
 
             <DialogFooter>

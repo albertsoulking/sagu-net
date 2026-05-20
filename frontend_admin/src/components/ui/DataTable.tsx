@@ -16,12 +16,15 @@ import { EmptyState } from './EmptyState'
 
 interface DataTableProps<T> {
   data: T[]
+  // TanStack columns in one table can legitimately mix string/number/status value types.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<T, any>[]
   searchPlaceholder?: string
   onSearch?: (value: string) => void
   onRowClick?: (row: T) => void
   isLoading?: boolean
   emptyTitle?: string
+  tableClassName?: string
 }
 
 export function DataTable<T>({
@@ -32,10 +35,12 @@ export function DataTable<T>({
   onRowClick,
   isLoading,
   emptyTitle,
+  tableClassName,
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
@@ -74,7 +79,7 @@ export function DataTable<T>({
       </span>
 
       <span className="block overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
-        <table className="w-full min-w-[640px] text-left text-sm">
+        <table className={cn('w-full min-w-[640px] text-left text-sm', tableClassName)}>
           <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-800/50">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>

@@ -73,7 +73,7 @@ export function MapView({
 
   return (
     <>
-      <div className="block overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700" style={{ height }}>
+      <div className="relative z-0 block isolate overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700" style={{ height }}>
         <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }}>
           <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           {onClick && <ClickHandler onClick={onClick} />}
