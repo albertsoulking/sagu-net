@@ -1,1 +1,12 @@
 Sagu Net
+Internet Service Provider
+
+#create vite react
+npm create vite@latest frontend
+
+#create nestjs
+nest new backend
+
+npm install
+npm run dev
+npm run start:dev

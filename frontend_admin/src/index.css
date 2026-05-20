@@ -1,0 +1,51 @@
+@import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-accent-400: #22d3ee;
+  --color-accent-500: #06b6d4;
+  --color-accent-600: #0891b2;
+  --radius-card: 16px;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-slate-200 dark:border-slate-700;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+    font-family: var(--font-sans);
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply border border-white/20 bg-white/70 shadow-lg backdrop-blur-xl dark:border-slate-700/50 dark:bg-slate-900/70;
+  }
+
+  .card-hover {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg;
+  }
+
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary-500 to-accent-500;
+  }
+
+  .focus-glow:focus {
+    @apply ring-2 ring-primary-400/50 ring-offset-2 dark:ring-offset-slate-900;
+  }
+}
