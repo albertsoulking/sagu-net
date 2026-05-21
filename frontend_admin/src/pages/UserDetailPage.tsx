@@ -1,14 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type {
   IspUser,
   OnuConnectionStatus,
+  PackagePlan,
   SubscriberAccountStatus,
   SubscriberAccountType,
 } from '@/types'
-import { mockPackages } from '@/services/mock/data'
+import { packagesService } from '@/services/packages.service'
+import { usersService } from '@/services/users.service'
 import { useUsersStore } from '@/store/usersStore'
 import { computeRenewalEndAndDays, subscriptionBaseAmount } from '@/utils/subscriberPricing'
 import { formatCurrency, formatDate } from '@/utils/format'
@@ -45,11 +47,41 @@ import {
 export function UserDetailPage() {
   const { userId } = useParams<{ userId: string }>()
   const navigate = useNavigate()
-  const user = useUsersStore((s) => (userId ? s.getById(userId) : undefined))
+  const [user, setUser] = useState<IspUser | null>(null)
+  const [packages, setPackages] = useState<PackagePlan[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!userId) {
+      navigate('/users')
+      return
+    }
+    setLoading(true)
+    Promise.all([
+      usersService.findOne(userId).then((r) => r.data),
+      packagesService.findAll().then((r) => r.data),
+    ])
+      .then(([u, p]) => {
+        setUser(u)
+        setPackages(p)
+      })
+      .catch(() => {
+        toast.error('Failed to load user')
+        navigate('/users')
+      })
+      .finally(() => setLoading(false))
+  }, [userId, navigate])
 
   if (!userId) {
-    navigate('/users')
     return null
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+      </div>
+    )
   }
 
   if (!user) {
@@ -66,21 +98,34 @@ export function UserDetailPage() {
   return (
     <UserDetailPanel
       user={user}
+      packages={packages}
       showBackLink
       onDeleted={() => navigate('/users')}
+      onUserUpdated={setUser}
     />
   )
 }
 
 interface UserDetailPanelProps {
   user: IspUser
+  packages?: PackagePlan[]
   showBackLink?: boolean
   onDeleted?: () => void
+  onUserUpdated?: (user: IspUser) => void
 }
 
-export function UserDetailPanel({ user, showBackLink = false, onDeleted }: UserDetailPanelProps) {
+export function UserDetailPanel({ user, packages: propPackages = [], showBackLink = false, onDeleted, onUserUpdated }: UserDetailPanelProps) {
+  const [packages, setPackages] = useState<PackagePlan[]>(propPackages)
   const updateUser = useUsersStore((s) => s.updateUser)
   const deleteUser = useUsersStore((s) => s.deleteUser)
+
+  useEffect(() => {
+    if (propPackages.length > 0) {
+      setPackages(propPackages)
+    } else {
+      packagesService.findAll().then((r) => setPackages(r.data)).catch(() => {})
+    }
+  }, [propPackages])
 
   const [renewOpen, setRenewOpen] = useState(false)
   const [renewMonths, setRenewMonths] = useState(1)
@@ -94,7 +139,7 @@ export function UserDetailPanel({ user, showBackLink = false, onDeleted }: UserD
   const upgradeEstimate = useMemo(() => {
     if (!upgradePlan) return 0
     const m = Math.max(1, user.months)
-    return subscriptionBaseAmount(upgradePlan, m, mockPackages) + (user.adjustmentAmount ?? 0)
+    return subscriptionBaseAmount(upgradePlan, m, packages) + (user.adjustmentAmount ?? 0)
   }, [user, upgradePlan])
 
   const renewalPreview = useMemo(
@@ -103,55 +148,85 @@ export function UserDetailPanel({ user, showBackLink = false, onDeleted }: UserD
   )
 
   const renewalEstimate = useMemo(() => {
-    const base = user.userType === 'foc' ? 0 : subscriptionBaseAmount(user.plan, renewMonths, mockPackages)
+    const base = user.userType === 'foc' ? 0 : subscriptionBaseAmount(user.plan, renewMonths, packages)
     return base + (user.adjustmentAmount ?? 0)
   }, [user, renewMonths])
 
-  const runRenew = () => {
+  const runRenew = async () => {
     const { endDate, remainingDays } = renewalPreview
     let status: SubscriberAccountStatus = user.status
     if (remainingDays >= 0) status = 'active'
-    updateUser(user.id, {
-      endDate,
-      billingEndDate: endDate,
-      remainingDays,
-      months: renewMonths,
-      status,
-    })
-    setRenewOpen(false)
-    toast.success(`Renewed ${renewMonths} month(s). New end: ${formatDate(endDate)}`)
+    const patch = { endDate, billingEndDate: endDate, remainingDays, months: renewMonths, status }
+    try {
+      await usersService.update(user.id, patch)
+      updateUser(user.id, patch)
+      onUserUpdated?.({ ...user, ...patch })
+      setRenewOpen(false)
+      toast.success(`Renewed ${renewMonths} month(s). New end: ${formatDate(endDate)}`)
+    } catch {
+      toast.error('Failed to renew subscription')
+    }
   }
 
-  const runUpgrade = () => {
+  const runUpgrade = async () => {
     if (!upgradePlan) return
-    updateUser(user.id, { plan: upgradePlan })
-    setUpgradeOpen(false)
-    toast.success(`Plan updated to ${upgradePlan}. Estimated renewal: ${formatCurrency(upgradeEstimate)}`)
+    try {
+      await usersService.update(user.id, { plan: upgradePlan })
+      updateUser(user.id, { plan: upgradePlan })
+      onUserUpdated?.({ ...user, plan: upgradePlan })
+      setUpgradeOpen(false)
+      toast.success(`Plan updated to ${upgradePlan}. Estimated renewal: ${formatCurrency(upgradeEstimate)}`)
+    } catch {
+      toast.error('Failed to upgrade plan')
+    }
   }
 
-  const runSetType = (t: SubscriberAccountType) => {
-    updateUser(user.id, { userType: t })
-    setTypeOpen(false)
-    toast.success(`Type set to ${USER_TYPE_LABELS[t]}`)
+  const runSetType = async (t: SubscriberAccountType) => {
+    try {
+      await usersService.update(user.id, { userType: t })
+      updateUser(user.id, { userType: t })
+      onUserUpdated?.({ ...user, userType: t })
+      setTypeOpen(false)
+      toast.success(`Type set to ${USER_TYPE_LABELS[t]}`)
+    } catch {
+      toast.error('Failed to update type')
+    }
   }
 
-  const runSetStatus = (s: SubscriberAccountStatus) => {
-    updateUser(user.id, { status: s })
-    setStatusOpen(false)
-    toast.success(`Status set to ${SUBSCRIBER_STATUS_LABELS[s]}`)
+  const runSetStatus = async (s: SubscriberAccountStatus) => {
+    try {
+      await usersService.update(user.id, { status: s })
+      updateUser(user.id, { status: s })
+      onUserUpdated?.({ ...user, status: s })
+      setStatusOpen(false)
+      toast.success(`Status set to ${SUBSCRIBER_STATUS_LABELS[s]}`)
+    } catch {
+      toast.error('Failed to update status')
+    }
   }
 
-  const runSetOnu = (o: OnuConnectionStatus) => {
-    updateUser(user.id, { onuStatus: o })
-    setOnuOpen(false)
-    toast.success(`ONU set to ${ONU_STATUS_LABELS[o]}`)
+  const runSetOnu = async (o: OnuConnectionStatus) => {
+    try {
+      await usersService.update(user.id, { onuStatus: o })
+      updateUser(user.id, { onuStatus: o })
+      onUserUpdated?.({ ...user, onuStatus: o })
+      setOnuOpen(false)
+      toast.success(`ONU set to ${ONU_STATUS_LABELS[o]}`)
+    } catch {
+      toast.error('Failed to update ONU status')
+    }
   }
 
-  const runDelete = () => {
-    deleteUser(user.id)
-    setDeleteOpen(false)
-    toast.success('User removed')
-    onDeleted?.()
+  const runDelete = async () => {
+    try {
+      await usersService.remove(user.id)
+      deleteUser(user.id)
+      setDeleteOpen(false)
+      toast.success('User removed')
+      onDeleted?.()
+    } catch {
+      toast.error('Failed to delete user')
+    }
   }
 
   return (
@@ -361,7 +436,7 @@ export function UserDetailPanel({ user, showBackLink = false, onDeleted }: UserD
             <Select value={upgradePlan} onValueChange={setUpgradePlan}>
               <SelectTrigger><SelectValue placeholder="Select plan" /></SelectTrigger>
               <SelectContent>
-                {mockPackages.map((p) => (
+                {packages.map((p) => (
                   <SelectItem key={p.id} value={p.plan}>{p.plan} — {formatCurrency(p.basePrice)}/mo</SelectItem>
                 ))}
               </SelectContent>
@@ -436,7 +511,7 @@ export function UserDetailPanel({ user, showBackLink = false, onDeleted }: UserD
             <DialogTitle>Delete account</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Remove {user.id} and related client-side data? This cannot be undone in the mock app.
+            Remove {user.id} and related data? This cannot be undone.
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
