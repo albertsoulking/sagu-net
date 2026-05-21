@@ -48,6 +48,17 @@ services:
     volumes:
       - backend_uploads:/app/uploads
 
+  frontend_user:
+    image: nginx:alpine
+    container_name: sagu_frontend_user
+    restart: unless-stopped
+    ports:
+      - "5174:80"
+    volumes:
+      - ./frontend_user/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+
 volumes:
   mysql_data:
   backend_uploads:
