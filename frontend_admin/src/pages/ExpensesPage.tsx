@@ -3,7 +3,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { Plus } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { toast } from 'sonner'
-import { mockApi } from '@/services/mock/api'
+import { expensesService } from '@/services/expenses.service'
 import type { Expense } from '@/types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -24,9 +24,9 @@ export function ExpensesPage() {
   const [addOpen, setAddOpen] = useState(false)
 
   useEffect(() => {
-    Promise.all([mockApi.getExpenses(), mockApi.getExpenseCharts()]).then(([e, c]) => {
-      setExpenses(e)
-      setChartData(c.byCategory.map((d) => ({ name: d.name, value: d.value ?? 0 })))
+    Promise.all([expensesService.findAll(), expensesService.getCategories()]).then(([e, c]) => {
+      setExpenses(e.data)
+      setChartData(c.data.map((d: { name: string; value?: number }) => ({ name: d.name, value: d.value ?? 0 })))
       setLoading(false)
     })
   }, [])

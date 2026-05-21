@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Pencil, Trash2, Plus, BarChart3 } from 'lucide-react'
 import { toast } from 'sonner'
-import { mockApi } from '@/services/mock/api'
+import { packagesService } from '@/services/packages.service'
 import type { PackagePlan } from '@/types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -18,7 +18,7 @@ export function PackagesPage() {
   const [form, setForm] = useState({ plan: '', basePrice: 0, category: 'Residential' })
 
   useEffect(() => {
-    mockApi.getPackages().then((d) => { setPackages(d); setLoading(false) })
+    packagesService.findAll().then((res) => { setPackages(res.data); setLoading(false) })
   }, [])
 
   if (loading) return <TableSkeleton rows={3} />

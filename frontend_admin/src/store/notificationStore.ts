@@ -1,35 +1,55 @@
 import { create } from 'zustand'
-import type { Notification } from '@/types'
-import { mockApi } from '@/services/mock/api'
+import { notificationsService } from '@/services/notifications.service'
+
+interface NotificationItem {
+  id: number
+  type: string
+  title: string
+  message: string
+  read: boolean
+  created_at: string
+}
 
 interface NotificationState {
-  items: Notification[]
+  notifications: NotificationItem[]
+  unreadCount: number
   isLoading: boolean
   fetch: () => Promise<void>
-  markRead: (id: string) => void
-  markAllRead: () => void
-  unreadCount: () => number
+  markAsRead: (id: number) => Promise<void>
+  markAllAsRead: () => Promise<void>
 }
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
-  items: [],
+  notifications: [],
+  unreadCount: 0,
   isLoading: false,
 
   fetch: async () => {
     set({ isLoading: true })
-    const items = await mockApi.getNotifications()
-    set({ items, isLoading: false })
+    try {
+      const { data: notifications } = await notificationsService.findAll()
+      const { data: unreadCount } = await notificationsService.getUnreadCount()
+      set({ notifications, unreadCount, isLoading: false })
+    } catch {
+      set({ isLoading: false })
+    }
   },
 
-  markRead: (id) => {
-    set({
-      items: get().items.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    })
+  markAsRead: async (id) => {
+    await notificationsService.markAsRead(id)
+    set((state) => ({
+      notifications: state.notifications.map((n) =>
+        n.id === id ? { ...n, read: true } : n
+      ),
+      unreadCount: Math.max(0, state.unreadCount - 1),
+    }))
   },
 
-  markAllRead: () => {
-    set({ items: get().items.map((n) => ({ ...n, read: true })) })
+  markAllAsRead: async () => {
+    await notificationsService.markAllAsRead()
+    set((state) => ({
+      notifications: state.notifications.map((n) => ({ ...n, read: true })),
+      unreadCount: 0,
+    }))
   },
-
-  unreadCount: () => get().items.filter((n) => !n.read).length,
 }))

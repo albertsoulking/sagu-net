@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Plus } from 'lucide-react'
-import { mockApi } from '@/services/mock/api'
+import { regionsService } from '@/services/regions.service'
 import type { Region } from '@/types'
 import { AddRegionDialog } from '@/components/dialogs/AddRegionDialog'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -19,7 +19,7 @@ export function RegionsPage() {
   const regionDialog = useRegionDialog()
 
   useEffect(() => {
-    mockApi.getRegions().then((d) => { setRegions(d); setLoading(false) })
+    regionsService.findAll().then((res) => { setRegions(res.data); setLoading(false) })
   }, [])
 
   const columns = useMemo(

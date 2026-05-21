@@ -1,23 +1,35 @@
 import { create } from 'zustand'
-import type { AppSettings } from '@/types'
-import { mockApi } from '@/services/mock/api'
-import { defaultSettings } from '@/services/mock/data'
+import { settingsService } from '@/services/settings.service'
 
-interface SettingsState extends AppSettings {
+interface SettingsState {
+  settings: Record<string, string>
   isLoading: boolean
   fetch: () => Promise<void>
-  update: (partial: Partial<AppSettings>) => void
+  update: (key: string, value: string) => Promise<void>
+  bulkUpdate: (data: Record<string, string>) => Promise<void>
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
-  ...defaultSettings,
+  settings: {},
   isLoading: false,
 
   fetch: async () => {
     set({ isLoading: true })
-    const settings = await mockApi.getSettings()
-    set({ ...settings, isLoading: false })
+    try {
+      const { data } = await settingsService.findAll()
+      set({ settings: data, isLoading: false })
+    } catch {
+      set({ isLoading: false })
+    }
   },
 
-  update: (partial) => set((s) => ({ ...s, ...partial })),
+  update: async (key, value) => {
+    await settingsService.update(key, value)
+    set((state) => ({ settings: { ...state.settings, [key]: value } }))
+  },
+
+  bulkUpdate: async (data) => {
+    const { data: updated } = await settingsService.bulkUpdate(data)
+    set({ settings: updated })
+  },
 }))

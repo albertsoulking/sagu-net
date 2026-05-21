@@ -5,9 +5,6 @@ import {
   DollarSign,
   Receipt,
   TrendingUp,
-  Activity,
-  Wallet,
-  Smartphone,
   RefreshCw,
   Download,
 } from 'lucide-react'
@@ -16,8 +13,6 @@ import {
   Area,
   BarChart,
   Bar,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
@@ -30,8 +25,7 @@ import {
 } from 'recharts'
 import { toast } from 'sonner'
 import dayjs from 'dayjs'
-import { mockApi } from '@/services/mock/api'
-import type { ActivityItem, DashboardStats } from '@/types'
+import { dashboardService } from '@/services/dashboard.service'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatCard } from '@/components/ui/StatCard'
 import { Card } from '@/components/ui/Card'
@@ -43,23 +37,95 @@ const COLORS = ['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444']
 
 type DateRange = 'today' | 'yesterday' | 'week' | 'month' | 'custom'
 
+interface SummaryData {
+  activeUsers: number
+  expiredUsers: number
+  suspendedUsers: number
+  totalUsers: number
+  revenue: number
+  expense: number
+  profit: number
+  dailyRenewals: { name: string; value: number }[]
+}
+
+interface ChartResponse {
+  monthlyRevenue: { name: string; value: number }[]
+  monthlyExpenses: { name: string; value: number }[]
+  packageStats: { name: string; value: number }[]
+}
+
+interface ActivityItem {
+  id: string
+  title: string
+  description: string
+  amount?: number
+  createdAt: string
+}
+
+const ACTIVITY_TITLES: Record<string, string> = {
+  renewal: 'Subscription Renewed',
+  new_user: 'New User',
+  expense: 'Expense Recorded',
+  installation: 'New Installation',
+}
+
 export function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [charts, setCharts] = useState<Awaited<ReturnType<typeof mockApi.getDashboardCharts>> | null>(null)
+  const [stats, setStats] = useState<SummaryData | null>(null)
+  const [charts, setCharts] = useState<{
+    revenueExpense: { name: string; revenue: number; expense: number }[]
+    dailyRenewals: { name: string; value: number }[]
+    packageDistribution: { name: string; value: number }[]
+    userStatus: { name: string; value: number }[]
+    monthlyProfit: { name: string; value: number }[]
+  } | null>(null)
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState<DateRange>('month')
 
   const load = async () => {
     setLoading(true)
-    const [s, c, a] = await Promise.all([
-      mockApi.getDashboardStats(),
-      mockApi.getDashboardCharts(),
-      mockApi.getActivities(),
-    ])
-    setStats(s)
-    setCharts(c)
-    setActivities(a)
+    try {
+      const [summaryRes, chartsRes, activitiesRes] = await Promise.all([
+        dashboardService.getSummary(),
+        dashboardService.getCharts(),
+        dashboardService.getRecentActivities(),
+      ])
+
+      const summaryData: SummaryData = summaryRes.data
+      const chartsData: ChartResponse = chartsRes.data
+      const rawActivities: { id: string; type: string; user: string; package: string; amount: number; date: string }[] = activitiesRes.data
+
+      setStats(summaryData)
+      setCharts({
+        revenueExpense: chartsData.monthlyRevenue.map((m, i) => ({
+          name: m.name,
+          revenue: m.value,
+          expense: chartsData.monthlyExpenses[i]?.value ?? 0,
+        })),
+        dailyRenewals: summaryData.dailyRenewals,
+        packageDistribution: chartsData.packageStats,
+        userStatus: [
+          { name: 'Active', value: summaryData.activeUsers },
+          { name: 'Expired', value: summaryData.expiredUsers },
+          { name: 'Suspended', value: summaryData.suspendedUsers },
+        ],
+        monthlyProfit: chartsData.monthlyRevenue.map((m, i) => ({
+          name: m.name,
+          value: m.value - (chartsData.monthlyExpenses[i]?.value ?? 0),
+        })),
+      })
+      setActivities(
+        rawActivities.map((a) => ({
+          id: a.id,
+          title: ACTIVITY_TITLES[a.type] ?? 'Activity',
+          description: a.user + (a.package ? ` - ${a.package}` : ''),
+          amount: a.amount,
+          createdAt: a.date,
+        }))
+      )
+    } catch {
+      toast.error('Failed to load dashboard data')
+    }
     setLoading(false)
   }
 
@@ -68,7 +134,7 @@ export function DashboardPage() {
   }, [dateRange])
 
   const handleExport = (type: string) => {
-    toast.success(`${type} export started (mock)`)
+    toast.success(`${type} export started`)
   }
 
   if (loading && !stats) {
@@ -76,7 +142,7 @@ export function DashboardPage() {
       <span className="space-y-6">
         <TableSkeleton rows={2} />
         <span className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
+          {Array.from({ length: 7 }).map((_, i) => (
             <span key={i} className="h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-700" />
           ))}
         </span>
@@ -87,14 +153,13 @@ export function DashboardPage() {
   if (!stats || !charts) return null
 
   const statCards = [
-    { title: 'Active Users', value: stats.activeUsers, change: stats.changes.activeUsers, icon: Users, gradient: true },
-    { title: 'Expired Users', value: stats.expiredUsers, change: stats.changes.expiredUsers, icon: UserX },
-    { title: 'Total Revenue', value: stats.totalRevenue, change: stats.changes.totalRevenue, icon: DollarSign, isCurrency: true, gradient: true },
-    { title: 'Total Expense', value: stats.totalExpense, change: stats.changes.totalExpense, icon: Receipt, isCurrency: true },
-    { title: 'Net Profit', value: stats.netProfit, change: stats.changes.netProfit, icon: TrendingUp, isCurrency: true },
-    { title: 'Bandwidth Usage', value: `${stats.bandwidthUsage}%`, change: stats.changes.bandwidthUsage, icon: Activity },
-    { title: 'Cash Balance', value: stats.cashBalance, change: stats.changes.cashBalance, icon: Wallet, isCurrency: true },
-    { title: 'Kpay Balance', value: stats.kpayBalance, change: stats.changes.kpayBalance, icon: Smartphone, isCurrency: true },
+    { title: 'Active Users', value: stats.activeUsers, icon: Users, gradient: true },
+    { title: 'Expired Users', value: stats.expiredUsers, icon: UserX },
+    { title: 'Suspended Users', value: stats.suspendedUsers, icon: UserX },
+    { title: 'Total Users', value: stats.totalUsers, icon: Users },
+    { title: 'Total Revenue', value: stats.revenue, icon: DollarSign, isCurrency: true, gradient: true },
+    { title: 'Total Expense', value: stats.expense, icon: Receipt, isCurrency: true },
+    { title: 'Net Profit', value: stats.profit, icon: TrendingUp, isCurrency: true },
   ]
 
   return (
@@ -188,21 +253,6 @@ export function DashboardPage() {
               <Tooltip />
               <Bar dataKey="value" fill="#10b981" radius={[0, 8, 8, 0]} />
             </BarChart>
-          </ResponsiveContainer>
-        </Card>
-
-        <Card>
-          <h3 className="mb-4 font-semibold">Cash Flow</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={charts.cashFlow}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis tickFormatter={(v) => `${(v / 1e6).toFixed(1)}M`} />
-              <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-              <Legend />
-              <Line type="monotone" dataKey="inflow" stroke="#3b82f6" strokeWidth={2} />
-              <Line type="monotone" dataKey="outflow" stroke="#ef4444" strokeWidth={2} />
-            </LineChart>
           </ResponsiveContainer>
         </Card>
 

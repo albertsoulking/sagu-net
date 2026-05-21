@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Download, DollarSign } from 'lucide-react'
 import { toast } from 'sonner'
-import { mockApi } from '@/services/mock/api'
+import { employeesService } from '@/services/employees.service'
 import type { Employee } from '@/types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -25,7 +25,7 @@ export function EmployeesPage() {
   const [selected, setSelected] = useState<Employee | null>(null)
 
   useEffect(() => {
-    mockApi.getEmployees().then((d) => { setEmployees(d); setLoading(false) })
+    employeesService.findAll().then((res) => { setEmployees(res.data); setLoading(false) })
   }, [])
 
   const columns = useMemo(

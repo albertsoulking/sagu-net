@@ -1,15 +1,16 @@
 import { create } from 'zustand'
-import type { AuthUser, LoginCredentials } from '@/types'
-import { mockApi } from '@/services/mock/api'
+import type { LoginCredentials } from '@/types'
+import { authService } from '@/services/auth.service'
 import { clearToken, getToken, getStoredUser, isTokenExpired, setStoredUser, setToken } from '@/utils/token'
 
 interface AuthState {
-  user: AuthUser | null
+  user: { id: number; username: string; email: string; phone: string; role: string } | null
   isAuthenticated: boolean
   isLoading: boolean
   login: (credentials: LoginCredentials) => Promise<void>
   logout: () => void
   hydrate: () => void
+  fetchProfile: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -19,7 +20,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   hydrate: () => {
     const token = getToken()
-    const user = getStoredUser<AuthUser>()
+    const user = getStoredUser<{ id: number; username: string; email: string; phone: string; role: string }>()
     if (token && user && !isTokenExpired()) {
       set({ user, isAuthenticated: true })
     } else {
@@ -31,10 +32,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (credentials) => {
     set({ isLoading: true })
     try {
-      const res = await mockApi.login(credentials)
-      setToken(res.token)
-      setStoredUser(res.user, res.expiresAt)
-      set({ user: res.user, isAuthenticated: true, isLoading: false })
+      const { data } = await authService.login(credentials)
+      setToken(data.access_token)
+      setStoredUser(data.user, Date.now() + 86400000)
+      set({ user: data.user, isAuthenticated: true, isLoading: false })
     } catch (e) {
       set({ isLoading: false })
       throw e
@@ -44,5 +45,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: () => {
     clearToken()
     set({ user: null, isAuthenticated: false })
+  },
+
+  fetchProfile: async () => {
+    try {
+      const { data } = await authService.getProfile()
+      set({ user: data })
+    } catch {
+      clearToken()
+      set({ user: null, isAuthenticated: false })
+    }
   },
 }))

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { mockApi } from '@/services/mock/api'
+import { api } from '@/services/api'
 import type { InstallationRule } from '@/types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
@@ -20,7 +20,7 @@ export function InstallationRulesPage() {
   const [cableMeters, setCableMeters] = useState(80)
 
   useEffect(() => {
-    mockApi.getInstallationRules().then(setRules)
+    api.get('/installation-rules').then((res) => setRules(res.data.data))
   }, [])
 
   const calcFee = (rule: InstallationRule) => {

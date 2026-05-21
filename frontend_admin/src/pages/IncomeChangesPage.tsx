@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
-import { mockApi } from '@/services/mock/api'
+import { api } from '@/services/api'
 import type { IncomeChange } from '@/types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -21,7 +21,7 @@ export function IncomeChangesPage() {
   const [addOpen, setAddOpen] = useState(false)
 
   useEffect(() => {
-    mockApi.getIncomeChanges().then((d) => { setData(d); setLoading(false) })
+    api.get('/income-changes').then((res) => { setData(res.data.data); setLoading(false) })
   }, [])
 
   const cashBalance = data.filter((d) => d.direction === 'in' && d.paymentType === 'cash').reduce((s, d) => s + d.amount, 0)

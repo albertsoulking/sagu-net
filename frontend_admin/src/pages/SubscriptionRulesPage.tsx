@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { mockApi } from '@/services/mock/api'
+import { api } from '@/services/api'
 import type { SubscriptionRule } from '@/types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
@@ -11,7 +11,7 @@ export function SubscriptionRulesPage() {
   const [rules, setRules] = useState<SubscriptionRule[]>([])
 
   useEffect(() => {
-    mockApi.getSubscriptionRules().then(setRules)
+    api.get('/subscription-rules').then((res) => setRules(res.data.data))
   }, [])
 
   return (

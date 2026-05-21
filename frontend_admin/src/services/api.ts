@@ -6,6 +6,7 @@ const API_BASE = import.meta.env.VITE_API_URL ?? '/api'
 export const api = axios.create({
   baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 15000,
 })
 
 api.interceptors.request.use((config) => {
@@ -17,7 +18,12 @@ api.interceptors.request.use((config) => {
 })
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
+      response.data = response.data
+    }
+    return response
+  },
   (error) => {
     if (error.response?.status === 401 || isTokenExpired()) {
       clearToken()

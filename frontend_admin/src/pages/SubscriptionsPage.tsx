@@ -2,35 +2,47 @@ import { useEffect, useState, useMemo } from 'react'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
-import { mockApi } from '@/services/mock/api'
-import type { Subscription } from '@/types'
+import { subscriptionsService } from '@/services/subscriptions.service'
+import { packagesService } from '@/services/packages.service'
+import { usersService } from '@/services/users.service'
+import type { Subscription, PackagePlan, IspUser } from '@/types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { DataTable } from '@/components/ui/DataTable'
 import { Modal } from '@/components/ui/Modal'
 import { Card } from '@/components/ui/Card'
 import { formatCurrency, formatDate } from '@/utils/format'
-import { mockPackages, mockUsers } from '@/services/mock/data'
 
 const col = createColumnHelper<Subscription>()
 
 export function SubscriptionsPage() {
   const [data, setData] = useState<Subscription[]>([])
+  const [packages, setPackages] = useState<PackagePlan[]>([])
+  const [users, setUsers] = useState<IspUser[]>([])
   const [loading, setLoading] = useState(true)
   const [renewOpen, setRenewOpen] = useState(false)
   const [form, setForm] = useState<{ userId: string; plan: string; months: number; installationType: string; paymentType: 'cash' | 'kpay' }>({
     userId: '',
-    plan: mockPackages[0].plan,
+    plan: '',
     months: 3,
     installationType: 'Renewal',
     paymentType: 'cash',
   })
 
   useEffect(() => {
-    mockApi.getSubscriptions().then((d) => { setData(d); setLoading(false) })
+    Promise.all([
+      subscriptionsService.findAll(),
+      packagesService.findAll(),
+      usersService.findAll(),
+    ]).then(([subs, pkgs, usrs]) => {
+      setData(subs.data)
+      setPackages(pkgs.data)
+      setUsers(usrs.data)
+      setLoading(false)
+    })
   }, [])
 
-  const basePrice = mockPackages.find((p) => p.plan === form.plan)?.basePrice ?? 25000
+  const basePrice = packages.find((p) => p.plan === form.plan)?.basePrice ?? 25000
   const discount = form.months >= 12 ? 15 : form.months >= 6 ? 10 : form.months >= 3 ? 5 : 0
   const installationFee = form.installationType === 'Standard' ? 15000 : 0
   const finalPrice = basePrice * form.months * (1 - discount / 100) + installationFee
@@ -65,13 +77,13 @@ export function SubscriptionsPage() {
             <label className="mb-1.5 block text-sm font-medium">User</label>
             <select className="w-full rounded-xl border px-4 py-2.5 text-sm dark:bg-slate-800" value={form.userId} onChange={(e) => setForm({ ...form, userId: e.target.value })}>
               <option value="">Select user</option>
-              {mockUsers.map((u) => <option key={u.id} value={u.id}>{u.username}</option>)}
+              {users.map((u) => <option key={u.id} value={u.id}>{u.username}</option>)}
             </select>
           </span>
           <span>
             <label className="mb-1.5 block text-sm font-medium">Package</label>
             <select className="w-full rounded-xl border px-4 py-2.5 text-sm dark:bg-slate-800" value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
-              {mockPackages.map((p) => <option key={p.id} value={p.plan}>{p.plan}</option>)}
+              {packages.map((p) => <option key={p.id} value={p.plan}>{p.plan}</option>)}
             </select>
           </span>
           <span>

@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Download, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import type { IspUser } from '@/types'
+import { usersService } from '@/services/users.service'
 import { AddUserWizard } from '@/features/users/AddUserWizard'
 import { useUsersStore } from '@/store/usersStore'
 import { UserDetailPanel } from '@/pages/UserDetailPage'
@@ -27,7 +28,12 @@ const col = createColumnHelper<IspUser>()
 
 export function UsersPage() {
   const users = useUsersStore((s) => s.users)
+  const setUsers = useUsersStore((s) => s.setUsers)
   const [addOpen, setAddOpen] = useState(false)
+
+  useEffect(() => {
+    usersService.findAll().then((res) => setUsers(res.data))
+  }, [setUsers])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const selectedUser = useMemo(
     () => users.find((user) => user.id === selectedId) ?? null,
