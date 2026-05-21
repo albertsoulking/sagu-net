@@ -139,14 +139,14 @@ export function DashboardPage() {
 
   if (loading && !stats) {
     return (
-      <span className="space-y-6">
+      <div className="space-y-6">
         <TableSkeleton rows={2} />
-        <span className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 7 }).map((_, i) => (
-            <span key={i} className="h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-700" />
+            <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-700" />
           ))}
-        </span>
-      </span>
+        </div>
+      </div>
     )
   }
 
@@ -163,7 +163,7 @@ export function DashboardPage() {
   ]
 
   return (
-    <span className="space-y-6">
+      <div className="space-y-6">
       <PageHeader
         title="Dashboard"
         description="ISP analytics and business overview"
@@ -193,13 +193,13 @@ export function DashboardPage() {
         }
       />
 
-      <span className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {statCards.map((card) => (
           <StatCard key={card.title} {...card} />
         ))}
-      </span>
+      </div>
 
-      <span className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <h3 className="mb-4 font-semibold">Revenue vs Expense</h3>
           <ResponsiveContainer width="100%" height={280}>
@@ -268,25 +268,25 @@ export function DashboardPage() {
             </AreaChart>
           </ResponsiveContainer>
         </Card>
-      </span>
+      </div>
 
       <Card>
         <h3 className="mb-4 font-semibold">Recent Activities</h3>
-        <span className="space-y-3">
+        <div className="space-y-3">
           {activities.map((a) => (
-            <span key={a.id} className="flex items-center justify-between rounded-xl border border-slate-100 p-4 dark:border-slate-800">
-              <span>
+            <div key={a.id} className="flex items-center justify-between rounded-xl border border-slate-100 p-4 dark:border-slate-800">
+              <div>
                 <p className="font-medium">{a.title}</p>
                 <p className="text-sm text-slate-500">{a.description}</p>
-              </span>
-              <span className="text-right text-sm">
+              </div>
+              <div className="text-right text-sm">
                 {a.amount && <p className="font-medium text-emerald-600">{formatCurrency(a.amount)}</p>}
                 <p className="text-slate-400">{dayjs(a.createdAt).format('DD MMM, HH:mm')}</p>
-              </span>
-            </span>
+              </div>
+            </div>
           ))}
-        </span>
+        </div>
       </Card>
-    </span>
+    </div>
   )
 }

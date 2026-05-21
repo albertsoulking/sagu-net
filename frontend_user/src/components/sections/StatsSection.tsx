@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import CountUp from 'react-countup'
+import CountUp from '@/components/ui/CountUp'
 import { Users, MapPin, Gauge, Globe, Shield } from 'lucide-react'
 import { STATS } from '@/constants'
 import { cn } from '@/lib/utils'
@@ -53,17 +53,14 @@ export default function StatsSection() {
                     </div>
 
                     <div className="text-3xl md:text-4xl font-bold gradient-text mb-1">
-                      {isInView ? (
-                        <CountUp
-                          end={stat.value}
-                          suffix={stat.suffix}
-                          prefix={stat.prefix}
-                          duration={2.5}
-                          decimals={stat.value % 1 !== 0 ? 1 : 0}
-                        />
-                      ) : (
-                        <span>0{stat.suffix}</span>
-                      )}
+                      <CountUp
+                        end={stat.value}
+                        suffix={stat.suffix}
+                        prefix={stat.prefix}
+                        duration={2500}
+                        decimals={stat.value % 1 !== 0 ? 1 : 0}
+                        start={isInView}
+                      />
                     </div>
 
                     <p className="text-sm text-white/50">{stat.label}</p>

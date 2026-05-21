@@ -1,10 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MapPin, Check, ChevronDown, Wifi, Activity, Gauge, Shield } from 'lucide-react'
-import CountUp from 'react-countup'
-import { useInView } from 'react-intersection-observer'
 import { Button } from '@/components/ui/Button'
 import { SectionTitle } from '@/components/ui/SectionTitle'
+import StatItem from '@/components/ui/StatItem'
 import { fadeInUp, staggerContainer, staggerItem, scaleIn } from '@/animations'
 import { cn } from '@/lib/utils'
 
@@ -143,7 +142,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 }
 
 export default function CoveragePage() {
-  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.3 })
+  const coverageRef = useRef(null)
 
   return (
     <div className="overflow-hidden">
@@ -191,7 +190,7 @@ export default function CoveragePage() {
       <section className="relative py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            ref={ref}
+            ref={coverageRef}
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
@@ -204,13 +203,7 @@ export default function CoveragePage() {
               { value: 500, suffix: '+ km', label: 'Fiber Network' },
               { value: 95, suffix: '%', label: 'Coverage Area' },
             ].map((stat) => (
-              <motion.div key={stat.label} variants={staggerItem} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold gradient-text mb-2">
-                  {inView ? <CountUp end={stat.value} duration={2.5} /> : 0}
-                  {stat.suffix}
-                </div>
-                <p className="text-white/50 text-sm">{stat.label}</p>
-              </motion.div>
+              <StatItem key={stat.label} value={stat.value} suffix={stat.suffix} label={stat.label} />
             ))}
           </motion.div>
         </div>

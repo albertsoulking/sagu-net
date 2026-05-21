@@ -1,11 +1,10 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Target, Eye, Heart, Check, Star } from 'lucide-react'
-import CountUp from 'react-countup'
-import { useInView } from 'react-intersection-observer'
+import { ArrowRight, Target, Eye, Heart, Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { SectionTitle } from '@/components/ui/SectionTitle'
-import { fadeInUp, staggerContainer, staggerItem, fadeIn, scaleIn } from '@/animations'
+import StatItem from '@/components/ui/StatItem'
+import { fadeInUp, staggerContainer, staggerItem, scaleIn } from '@/animations'
 import { cn } from '@/lib/utils'
 import { STATS, COMPANY } from '@/constants'
 
@@ -30,19 +29,6 @@ const values = [
   { icon: Eye, title: 'Vision', description: 'A fully connected Myanmar where every village, home, and business has access to world-class internet infrastructure, creating limitless opportunities for all.' },
   { icon: Heart, title: 'Values', description: 'Integrity, innovation, customer-centricity, and community development guide every decision we make at Sagu Net.' },
 ]
-
-function StatItem({ value, suffix, label }: { value: number; suffix: string; label: string }) {
-  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.3 })
-  return (
-    <div ref={ref} className="text-center p-6">
-      <div className="text-3xl md:text-4xl font-bold gradient-text mb-2">
-        {inView ? <CountUp end={value} decimals={value % 1 ? 1 : 0} duration={2.5} /> : 0}
-        {suffix}
-      </div>
-      <p className="text-white/50 text-sm">{label}</p>
-    </div>
-  )
-}
 
 export default function AboutPage() {
   return (

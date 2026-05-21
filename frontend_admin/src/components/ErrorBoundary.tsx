@@ -24,14 +24,14 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <span className="flex min-h-[400px] flex-col items-center justify-center p-8 text-center">
+        <div className="flex min-h-[400px] flex-col items-center justify-center p-8 text-center">
           <AlertTriangle className="mb-4 h-12 w-12 text-red-500" />
           <h2 className="text-xl font-semibold">Something went wrong</h2>
           <p className="mt-2 text-slate-500">An unexpected error occurred. Please try again.</p>
           <Button className="mt-4" onClick={() => this.setState({ hasError: false })}>
             Retry
           </Button>
-        </span>
+        </div>
       )
     }
     return this.props.children

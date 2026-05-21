@@ -5,7 +5,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as helmet from 'helmet';
 import * as compression from 'compression';
 import { AppModule } from './app.module';
-import { HttpExceptionFilter } from './filters/http-exception.filter';
+import { HttpExceptionFilter, AllExceptionsFilter } from './filters/http-exception.filter';
 import { TransformInterceptor } from './interceptors/transform.interceptor';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -33,7 +33,7 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(new AllExceptionsFilter(), new HttpExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {

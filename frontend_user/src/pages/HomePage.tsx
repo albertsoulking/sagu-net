@@ -1,16 +1,15 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Check, Star, Wifi, Shield, Globe, Server } from 'lucide-react'
-import { useInView } from 'react-intersection-observer'
-import CountUp from 'react-countup'
 import { SectionTitle } from '@/components/ui/SectionTitle'
 import { Button } from '@/components/ui/Button'
+import StatItem from '@/components/ui/StatItem'
 import { fadeInUp, fadeInLeft, fadeInRight, staggerContainer, staggerItem, fadeIn, scaleIn } from '@/animations'
 import { cn } from '@/lib/utils'
 import { services, pricingPlans, testimonials, whyChooseUs } from '@/data'
 import { STATS, COMPANY } from '@/constants'
 
-function AnimatedSection({ children, className, ...props }: { children: React.ReactNode; className?: string; [key: string]: unknown }) {
+function AnimatedSection({ children, className, ...props }: { children: React.ReactNode; className?: string; [key: string]: any }) {
   return (
     <motion.section
       variants={fadeIn}
@@ -22,23 +21,6 @@ function AnimatedSection({ children, className, ...props }: { children: React.Re
     >
       {children}
     </motion.section>
-  )
-}
-
-function StatItem({ value, suffix, label }: { value: number; suffix: string; label: string }) {
-  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.3 })
-  return (
-    <motion.div
-      ref={ref}
-      variants={staggerItem}
-      className="text-center p-6"
-    >
-      <div className="text-3xl md:text-4xl lg:text-5xl font-bold gradient-text mb-2">
-        {inView ? <CountUp end={value} decimals={value % 1 ? 1 : 0} duration={2.5} /> : 0}
-        {suffix}
-      </div>
-      <p className="text-white/50 text-sm md:text-base">{label}</p>
-    </motion.div>
   )
 }
 

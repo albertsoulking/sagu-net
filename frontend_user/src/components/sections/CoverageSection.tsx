@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import CountUp from 'react-countup'
+import CountUp from '@/components/ui/CountUp'
 import { MapPin, Users, Wifi, CheckCircle, Activity, Zap, Timer, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fadeInLeft, fadeInRight, staggerContainer, staggerItem } from '@/animations'
@@ -118,16 +118,13 @@ export default function CoverageSection() {
                   </div>
                   <div>
                     <div className="text-2xl font-bold gradient-text">
-                      {isInView ? (
-                        <CountUp
-                          end={stat.value}
-                          suffix={stat.suffix}
-                          duration={2.5}
-                          decimals={0}
-                        />
-                      ) : (
-                        <span>0{stat.suffix}</span>
-                      )}
+                      <CountUp
+                        end={stat.value}
+                        suffix={stat.suffix}
+                        duration={2500}
+                        decimals={0}
+                        start={isInView}
+                      />
                     </div>
                     <p className="text-sm text-white/50">{stat.label}</p>
                   </div>
