@@ -4,13 +4,14 @@ import { authService } from '@/services/auth.service'
 import { clearToken, getToken, getStoredUser, isTokenExpired, setStoredUser, setToken } from '@/utils/token'
 
 interface AuthState {
-  user: { id: number; username: string; email: string; phone: string; role: string } | null
+  user: { id: number; username: string; name: string | null; email: string | null; phone: string | null; role: string } | null
   isAuthenticated: boolean
   isLoading: boolean
   login: (credentials: LoginCredentials) => Promise<void>
   logout: () => void
   hydrate: () => void
   fetchProfile: () => Promise<void>
+  updateProfile: (data: { username?: string; password?: string }) => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -20,7 +21,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   hydrate: () => {
     const token = getToken()
-    const user = getStoredUser<{ id: number; username: string; email: string; phone: string; role: string }>()
+    const user = getStoredUser<{ id: number; username: string; name: string | null; email: string | null; phone: string | null; role: string }>()
     if (token && user && !isTokenExpired()) {
       set({ user, isAuthenticated: true })
     } else {
@@ -32,7 +33,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (credentials) => {
     set({ isLoading: true })
     try {
-      const { data } = await authService.login(credentials)
+      const data = await authService.login(credentials)
       setToken(data.access_token)
       setStoredUser(data.user, Date.now() + 86400000)
       set({ user: data.user, isAuthenticated: true, isLoading: false })
@@ -49,11 +50,17 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   fetchProfile: async () => {
     try {
-      const { data } = await authService.getProfile()
+      const data = await authService.getProfile()
       set({ user: data })
     } catch {
       clearToken()
       set({ user: null, isAuthenticated: false })
     }
+  },
+
+  updateProfile: async (data) => {
+    const updated = await authService.updateProfile(data)
+    set({ user: updated })
+    setStoredUser(updated, Date.now() + 86400000)
   },
 }))

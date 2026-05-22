@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Put,
   Body,
   UseGuards,
   Req,
@@ -13,6 +14,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
 
@@ -51,12 +53,37 @@ export class AuthController {
     return this.authService.refresh(refreshDto.refresh_token);
   }
 
+  @Get('check-init')
+  @ApiOperation({ summary: 'Check if any admin exists' })
+  async checkInit() {
+    return this.authService.checkInit();
+  }
+
+  @Post('init')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Initialize default admin (admin/admin123)' })
+  async init() {
+    return this.authService.init();
+  }
+
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get profile' })
   async getProfile(@CurrentUser('id') userId: number) {
     return this.authService.getProfile(userId);
+  }
+
+  @Put('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update profile (username/password)' })
+  async updateProfile(
+    @CurrentUser('id') userId: number,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    return this.authService.updateProfile(userId, dto);
   }
 
   @Post('change-password')

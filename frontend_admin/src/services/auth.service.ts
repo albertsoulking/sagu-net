@@ -11,8 +11,9 @@ export interface AuthResponse {
   user: {
     id: number
     username: string
-    email: string
-    phone: string
+    name: string | null
+    email: string | null
+    phone: string | null
     role: string
   }
 }
@@ -25,6 +26,21 @@ export const authService = {
 
   async logout(refreshToken?: string) {
     const res = await api.post('/auth/logout', { refresh_token: refreshToken })
+    return res.data
+  },
+
+  async checkInit() {
+    const res = await api.get<{ initialized: boolean }>('/auth/check-init')
+    return res.data
+  },
+
+  async init() {
+    const res = await api.post<{ message: string }>('/auth/init')
+    return res.data
+  },
+
+  async updateProfile(data: { username?: string; password?: string }) {
+    const res = await api.put('/auth/profile', data)
     return res.data
   },
 

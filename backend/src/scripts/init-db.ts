@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as dotenv from 'dotenv';
 import { join } from 'path';
+import { AdminRole } from '../admins/entities/admin.entity';
 
 dotenv.config({ path: join(process.cwd(), '.env') });
 
@@ -23,20 +24,20 @@ async function init() {
   await dataSource.initialize();
   console.log('Database tables created successfully');
 
-  const userRepo = dataSource.getRepository('User');
+  const adminRepo = dataSource.getRepository('Admin');
   const settingRepo = dataSource.getRepository('Setting');
 
-  const adminExists = await userRepo.findOne({ where: { username: 'admin' } });
+  const adminExists = await adminRepo.findOne({ where: { username: 'admin' } });
   if (!adminExists) {
     const hashedPassword = await bcrypt.hash('admin123', 10);
-    await userRepo.save({
+    await adminRepo.save({
       username: 'admin',
       password: hashedPassword,
-      role: 'super_admin',
+      name: 'Super Admin',
       email: 'admin@sagunet.com',
       phone: '09123456789',
-      status: 'active',
-      customer_id: 'ADMIN-001',
+      role: AdminRole.SUPER_ADMIN,
+      is_active: true,
     });
     console.log('Admin user created: admin / admin123');
   } else {

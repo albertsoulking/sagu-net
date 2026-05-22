@@ -15,6 +15,7 @@ import { InstallationRulesPage } from '@/pages/InstallationRulesPage'
 import { SubscriptionRulesPage } from '@/pages/SubscriptionRulesPage'
 import { ReportsPage } from '@/pages/ReportsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { ProfilePage } from '@/pages/ProfilePage'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export const router = createBrowserRouter([
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([
       { path: 'subscription-rules', element: <SubscriptionRulesPage /> },
       { path: 'reports', element: <ReportsPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'profile', element: <ProfilePage /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

@@ -6,12 +6,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { User } from '../users/entities/user.entity';
+import { Admin } from '../admins/entities/admin.entity';
 import { AuditLog } from '../audit-logs/entities/audit-log.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, AuditLog]),
+    TypeOrmModule.forFeature([Admin, AuditLog]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

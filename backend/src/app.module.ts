@@ -17,6 +17,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { ReportsModule } from './reports/reports.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
+import { AdminsModule } from './admins/admins.module';
 import { SettingsModule } from './settings/settings.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { IncomeChangesModule } from './income-changes/income-changes.module';
@@ -34,6 +35,7 @@ import { SubscriptionRulesModule } from './subscription-rules/subscription-rules
     ScheduleModule.forRoot(),
     CacheModule.register({ isGlobal: true }),
     DatabaseModule,
+    AdminsModule,
     AuthModule,
     UsersModule,
     PackagesModule,

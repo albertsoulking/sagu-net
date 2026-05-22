@@ -1,14 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Wifi } from 'lucide-react'
+import { Eye, EyeOff, Shield, Wifi } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/authStore'
+import { authService } from '@/services/auth.service'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { DEMO_CREDENTIALS } from '@/constants/roles'
 
 const schema = z.object({
   username: z.string().min(1, 'Username is required'),
@@ -24,6 +24,15 @@ export function LoginPage() {
   const isLoading = useAuthStore((s) => s.isLoading)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const [showPassword, setShowPassword] = useState(false)
+  const [initStatus, setInitStatus] = useState<'loading' | 'initialized' | 'uninitialized'>('loading')
+  const [initLoading, setInitLoading] = useState(false)
+
+  useEffect(() => {
+    authService.checkInit().then((res) => {
+      setInitStatus(res.initialized ? 'initialized' : 'uninitialized')
+    }).catch(() => setInitStatus('initialized'))
+  }, [])
+
   const {
     register,
     handleSubmit,
@@ -43,8 +52,25 @@ export function LoginPage() {
     }
   }
 
+  const handleInit = async () => {
+    setInitLoading(true)
+    try {
+      await authService.init()
+      toast.success('Default admin created: admin / admin123')
+      setInitStatus('initialized')
+    } catch {
+      toast.error('Failed to initialize')
+    } finally {
+      setInitLoading(false)
+    }
+  }
+
   if (isAuthenticated) {
     return <Navigate to="/" replace />
+  }
+
+  if (initStatus === 'loading') {
+    return null
   }
 
   return (
@@ -69,63 +95,68 @@ export function LoginPage() {
             Manage users, subscriptions, installations, finances, and network infrastructure in one place.
           </p>
         </span>
-        <span className="rounded-2xl bg-white/10 p-6 backdrop-blur">
-          <p className="text-sm text-white/70">Demo accounts</p>
-          <ul className="mt-2 space-y-1 text-sm">
-            {DEMO_CREDENTIALS.map((c) => (
-              <li key={c.username}>
-                {c.username} / {c.password} ({c.role})
-              </li>
-            ))}
-          </ul>
-        </span>
       </span>
 
       <span className="flex w-full flex-col justify-center bg-slate-50 p-8 dark:bg-slate-950 lg:w-1/2">
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="mx-auto w-full max-w-md space-y-6 rounded-2xl glass p-8"
-        >
-          <span className="text-center lg:hidden">
-            <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl gradient-primary">
-              <Wifi className="h-6 w-6 text-white" />
+        {initStatus === 'uninitialized' ? (
+          <span className="mx-auto w-full max-w-md space-y-6 rounded-2xl glass p-8 text-center">
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl gradient-primary">
+              <Shield className="h-8 w-8 text-white" />
             </span>
-            <h1 className="text-2xl font-bold">Sign in</h1>
-            <p className="text-slate-500">Sagu Net ISP Management</p>
+            <h1 className="text-2xl font-bold">Initialize System</h1>
+            <p className="text-slate-500">
+              No admin accounts found. Click below to create the default super admin account and get started.
+            </p>
+            <Button className="w-full" size="lg" loading={initLoading} onClick={handleInit}>
+              Initialize Admin
+            </Button>
           </span>
+        ) : (
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="mx-auto w-full max-w-md space-y-6 rounded-2xl glass p-8"
+          >
+            <span className="text-center lg:hidden">
+              <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl gradient-primary">
+                <Wifi className="h-6 w-6 text-white" />
+              </span>
+              <h1 className="text-2xl font-bold">Sign in</h1>
+              <p className="text-slate-500">Sagu Net ISP Management</p>
+            </span>
 
-          <Input label="Username" id="username" error={errors.username?.message} {...register('username')} />
-          <span className="relative block">
-            <Input
-              label="Password"
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              error={errors.password?.message}
-              {...register('password')}
-            />
-            <button
-              type="button"
-              className="absolute right-3 top-9 text-slate-400"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </span>
+            <Input label="Username" id="username" error={errors.username?.message} {...register('username')} />
+            <span className="relative block">
+              <Input
+                label="Password"
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                error={errors.password?.message}
+                {...register('password')}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-9 text-slate-400"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </span>
 
-          <span className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" className="rounded" {...register('rememberMe')} />
-              Remember me
-            </label>
-            <button type="button" className="text-primary-600 hover:underline">
-              Forgot password?
-            </button>
-          </span>
+            <span className="flex items-center justify-between text-sm">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" className="rounded" {...register('rememberMe')} />
+                Remember me
+              </label>
+              <button type="button" className="text-primary-600 hover:underline">
+                Forgot password?
+              </button>
+            </span>
 
-          <Button type="submit" className="w-full" size="lg" loading={isLoading}>
-            Sign in
-          </Button>
-        </form>
+            <Button type="submit" className="w-full" size="lg" loading={isLoading}>
+              Sign in
+            </Button>
+          </form>
+        )}
       </span>
     </span>
   )

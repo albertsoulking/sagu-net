@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'manager' | 'staff' | 'technician'
+export type UserRole = 'super_admin' | 'admin' | 'manager' | 'technician' | 'finance' | 'employee' | 'staff'
 
 /** Subscriber account state (Users module). */
 export type SubscriberAccountStatus = 'active' | 'expired' | 'suspended'

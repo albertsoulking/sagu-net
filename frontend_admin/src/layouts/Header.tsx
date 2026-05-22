@@ -165,7 +165,14 @@ export function Header() {
             <>
               <button type="button" className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
               <span className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border bg-white py-2 shadow-lg dark:bg-slate-900">
-                <span className="px-4 py-2 text-sm text-slate-500">@{user?.username}</span>
+                <span className="block px-4 py-2 text-sm text-slate-500">@{user?.username}</span>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                  onClick={() => { setProfileOpen(false); navigate('/profile') }}
+                >
+                  Profile
+                </button>
               </span>
             </>
           )}

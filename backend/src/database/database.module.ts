@@ -19,7 +19,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         synchronize: false,
         logging: process.env.NODE_ENV !== 'production',
         extra: {
-          charset: 'utf8mb4_unicode_ci',
+          charset: 'utf8mb4_0900_ai_ci',
         },
       }),
     }),
