@@ -25,7 +25,7 @@ export function EmployeesPage() {
   const [selected, setSelected] = useState<Employee | null>(null)
 
   useEffect(() => {
-    employeesService.findAll().then((res) => { setEmployees(res.data); setLoading(false) })
+    employeesService.findAll().then((res) => { setEmployees(res); setLoading(false) })
   }, [])
 
   const columns = useMemo(

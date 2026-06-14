@@ -5,7 +5,9 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import dayjs from 'dayjs'
 import type { IspUser, SubscriberAccountStatus } from '@/types'
-import { mockPackages, mockRegions, mockEmployees } from '@/services/mock/data'
+import { packagesService } from '@/services/packages.service'
+import { regionsService } from '@/services/regions.service'
+import { employeesService } from '@/services/employees.service'
 import { useUsersStore } from '@/store/usersStore'
 import {
   bundledExtraMonths,
@@ -97,6 +99,16 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
   const [step, setStep] = useState(0)
   const [data1, setData1] = useState<Step1 | null>(null)
   const [data2, setData2] = useState<Step2 | null>(null)
+  const [packages, setPackages] = useState<any[]>([])
+  const [regions, setRegions] = useState<any[]>([])
+  const [employees, setEmployees] = useState<any[]>([])
+
+  useEffect(() => {
+    if (!open) return
+    packagesService.findAll().then(setPackages).catch(() => {})
+    regionsService.findAll().then(setRegions).catch(() => {})
+    employeesService.findAll().then(setEmployees).catch(() => {})
+  }, [open])
 
   const form1 = useForm<Step1>({
     resolver: zodResolver(step1Schema),
@@ -104,7 +116,7 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
       id: '',
       name: '',
       phone: '',
-      region: mockRegions[0]?.villageName ?? '',
+      region: '',
       notes: '',
     },
   })
@@ -113,7 +125,7 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
     resolver: zodResolver(step2Schema) as Resolver<Step2>,
     defaultValues: {
       userType: 'premium',
-      plan: mockPackages[0]?.plan ?? '15 Mbps',
+      plan: '',
       subscriptionMonths: 1,
       extraMonthsDisplay: 0,
       billingStart: dayjs().format('YYYY-MM-DD'),
@@ -125,7 +137,7 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
   const form3 = useForm<Step3>({
     resolver: zodResolver(step3Schema) as Resolver<Step3>,
     defaultValues: {
-      installStaff: mockEmployees[0]?.name ?? '',
+      installStaff: '',
       onuMac: '',
       onuType: onuTypeOptions[0],
       onuStatus: 'offline',
@@ -157,10 +169,10 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
   }, [subMonths, billingStartWatch, setForm2, getForm2Values])
 
   const subLineTotal = useMemo(() => {
-    const base = subscriptionBaseAmount(planWatch, subMonths, mockPackages)
+    const base = subscriptionBaseAmount(planWatch, subMonths, packages)
     if (userTypeWatch === 'foc') return 0
     return base
-  }, [planWatch, subMonths, userTypeWatch])
+  }, [planWatch, subMonths, userTypeWatch, packages])
 
   const renewalDisplay = subLineTotal + (Number(adjustmentWatch) || 0)
 
@@ -183,7 +195,7 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
     form1.reset()
     form2.reset({
       userType: 'premium',
-      plan: mockPackages[0]?.plan ?? '15 Mbps',
+      plan: packages[0]?.name ?? '',
       subscriptionMonths: 1,
       extraMonthsDisplay: 0,
       billingStart: dayjs().format('YYYY-MM-DD'),
@@ -191,7 +203,7 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
       adjustmentAmount: 0,
     })
     form3.reset({
-      installStaff: mockEmployees[0]?.name ?? '',
+      installStaff: employees[0]?.name ?? '',
       onuMac: '',
       onuType: onuTypeOptions[0],
       onuStatus: 'offline',
@@ -333,11 +345,11 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
                 className="focus-glow w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-900"
                 {...form1.register('region')}
               >
-                {mockRegions.map((r) => (
-                  <option key={r.id} value={r.villageName}>
-                    {r.villageName}
+                {regions.length > 0 ? regions.map((r) => (
+                  <option key={r.id} value={r.village_name ?? r.villageName}>
+                    {r.village_name ?? r.villageName}
                   </option>
-                ))}
+                )) : <option value="">No regions available</option>}
               </select>
             </div>
             <div>
@@ -384,9 +396,9 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {mockPackages.map((p) => (
-                          <SelectItem key={p.id} value={p.plan}>
-                            {p.plan} — {formatCurrency(p.basePrice)}/mo
+                        {packages.map((p) => (
+                          <SelectItem key={p.id} value={p.name ?? p.plan}>
+                            {p.name ?? p.plan} — {formatCurrency(p.base_price ?? p.basePrice)}/mo
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -467,7 +479,7 @@ export function AddUserWizard({ open, onOpenChange }: AddUserWizardProps) {
                         <SelectValue placeholder="Select staff" />
                       </SelectTrigger>
                       <SelectContent>
-                        {mockEmployees.map((e) => (
+                        {employees.map((e) => (
                           <SelectItem key={e.id} value={e.name}>
                             {e.name}
                           </SelectItem>

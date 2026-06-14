@@ -144,19 +144,27 @@ export interface IncomeChange {
 }
 
 export interface InstallationRule {
-  id: string
-  type: 'renewal' | 'free' | 'standard' | 'relocation'
-  installationFee: number
-  freeDistance: number
-  extraMeterPrice: number
+  id: number
+  name: string
+  fee: number
+  free_distance: number
+  extra_meter_price: number
+  description: string | null
+  status: string
+  created_at: string
+  updated_at: string
 }
 
 export interface SubscriptionRule {
-  id: string
-  months: number
-  discountPercent: number
-  extraMonths: number
-  promotionBadge?: string
+  id: number
+  name: string
+  min_months: number
+  discount_percent: number
+  extra_months: number
+  description: string | null
+  status: string
+  created_at: string
+  updated_at: string
 }
 
 export interface Notification {

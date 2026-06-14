@@ -22,7 +22,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.use(helmet.default);
+  app.use(helmet.default());
   app.use(compression());
 
   app.useGlobalPipes(

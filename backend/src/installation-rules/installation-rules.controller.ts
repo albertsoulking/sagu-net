@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { InstallationRulesService } from './installation-rules.service';
+import { CreateInstallationRuleDto } from './dto/create-installation-rule.dto';
+import { UpdateInstallationRuleDto } from './dto/update-installation-rule.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
 
@@ -19,13 +21,13 @@ export class InstallationRulesController {
 
   @Post()
   @ApiOperation({ summary: 'Create installation rule' })
-  create(@Body() dto: any, @CurrentUser('id') userId: number) {
+  create(@Body() dto: CreateInstallationRuleDto, @CurrentUser('id') userId: number) {
     return this.installationRulesService.create(dto, userId);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update installation rule' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: any, @CurrentUser('id') userId: number) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateInstallationRuleDto, @CurrentUser('id') userId: number) {
     return this.installationRulesService.update(id, dto, userId);
   }
 

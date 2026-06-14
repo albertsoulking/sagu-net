@@ -36,7 +36,7 @@ export function SubscriptionsPage() {
       usersService.findAll(),
     ]).then(([subs, pkgs, usrs]) => {
       setData(subs.data)
-      setPackages(pkgs.data)
+      setPackages(pkgs)
       setUsers(usrs.data)
       setLoading(false)
     })

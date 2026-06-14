@@ -9,6 +9,12 @@ export class InstallationRule extends BaseEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   fee: number;
 
+  @Column({ name: 'free_distance', type: 'decimal', precision: 10, scale: 2, default: 0 })
+  free_distance: number;
+
+  @Column({ name: 'extra_meter_price', type: 'decimal', precision: 10, scale: 2, default: 0 })
+  extra_meter_price: number;
+
   @Column({ type: 'text', nullable: true })
   description: string;
 

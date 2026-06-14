@@ -35,7 +35,7 @@ export const authService = {
   },
 
   async init() {
-    const res = await api.post<{ message: string }>('/auth/init')
+    const res = await api.post<{ message: string; default_username: string; default_password: string }>('/auth/init')
     return res.data
   },
 

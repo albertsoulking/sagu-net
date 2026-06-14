@@ -181,7 +181,11 @@ export class AuthService {
       role: AdminRole.SUPER_ADMIN,
       is_active: true,
     });
-    return { message: 'Default admin created: admin / admin123' };
+    return {
+      message: 'Default admin created: admin / admin123',
+      default_username: 'admin',
+      default_password: 'admin123',
+    };
   }
 
   async updateProfile(userId: number, dto: { username?: string; password?: string }) {

@@ -19,7 +19,7 @@ export function RegionsPage() {
   const regionDialog = useRegionDialog()
 
   useEffect(() => {
-    regionsService.findAll().then((res) => { setRegions(res.data); setLoading(false) })
+    regionsService.findAll().then((res) => { setRegions(res); setLoading(false) })
   }, [])
 
   const columns = useMemo(

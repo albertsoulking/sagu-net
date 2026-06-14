@@ -16,8 +16,8 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   fetch: async () => {
     set({ isLoading: true })
     try {
-      const { data } = await settingsService.findAll()
-      set({ settings: data, isLoading: false })
+      const settings = await settingsService.findAll()
+      set({ settings, isLoading: false })
     } catch {
       set({ isLoading: false })
     }
@@ -29,7 +29,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   },
 
   bulkUpdate: async (data) => {
-    const { data: updated } = await settingsService.bulkUpdate(data)
+    const updated = await settingsService.bulkUpdate(data)
     set({ settings: updated })
   },
 }))

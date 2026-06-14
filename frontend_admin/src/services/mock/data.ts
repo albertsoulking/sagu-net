@@ -138,10 +138,10 @@ export const mockInstallationRules: InstallationRule[] = [
 ]
 
 export const mockSubscriptionRules: SubscriptionRule[] = [
-  { id: 'SR-01', months: 1, discountPercent: 0, extraMonths: 0 },
-  { id: 'SR-02', months: 3, discountPercent: 5, extraMonths: 0, promotionBadge: 'Save 5%' },
-  { id: 'SR-03', months: 6, discountPercent: 10, extraMonths: 1, promotionBadge: '1 Month Free' },
-  { id: 'SR-04', months: 12, discountPercent: 15, extraMonths: 2, promotionBadge: 'Best Value' },
+  { id: 1, name: 'Monthly', min_months: 1, discount_percent: 0, extra_months: 0, description: null, status: 'active', created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+  { id: 2, name: 'Quarterly Saver', min_months: 3, discount_percent: 5, extra_months: 0, description: 'Save 5%', status: 'active', created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+  { id: 3, name: '6+1 Promotion', min_months: 6, discount_percent: 10, extra_months: 1, description: '1 Month Free', status: 'active', created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+  { id: 4, name: 'Annual Best Value', min_months: 12, discount_percent: 15, extra_months: 2, description: 'Best Value', status: 'active', created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
 ]
 
 export const mockNotifications: Notification[] = [

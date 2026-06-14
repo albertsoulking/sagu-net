@@ -27,7 +27,7 @@ export function Header() {
   const user = useAuthStore((s) => s.user)
   const { isDark, toggle } = useThemeStore()
   const { setMobileMenuOpen } = useUiStore()
-  const { items, fetch, markRead, markAllRead, unreadCount } = useNotificationStore()
+  const { notifications, fetch, markAsRead, markAllAsRead, unreadCount } = useNotificationStore()
   const [notifOpen, setNotifOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [quickOpen, setQuickOpen] = useState(false)
@@ -36,8 +36,6 @@ export function Header() {
   useEffect(() => {
     fetch()
   }, [fetch])
-
-  const unread = unreadCount()
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b glass px-4 lg:px-6">
@@ -109,9 +107,9 @@ export function Header() {
             className="relative rounded-xl p-2 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <Bell className="h-5 w-5" />
-            {unread > 0 && (
+            {unreadCount > 0 && (
               <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
-                {unread}
+                {unreadCount}
               </span>
             )}
           </button>
@@ -121,12 +119,12 @@ export function Header() {
               <span className="absolute right-0 top-full z-50 mt-2 w-80 rounded-xl border bg-white shadow-xl dark:bg-slate-900">
                 <span className="flex items-center justify-between border-b px-4 py-3">
                   <span className="font-semibold">Notifications</span>
-                  <button type="button" className="text-xs text-primary-600" onClick={markAllRead}>
+                  <button type="button" className="text-xs text-primary-600" onClick={markAllAsRead}>
                     Mark all read
                   </button>
                 </span>
                 <span className="max-h-80 overflow-y-auto">
-                  {items.map((n) => (
+                  {notifications.map((n) => (
                     <button
                       key={n.id}
                       type="button"
@@ -134,11 +132,11 @@ export function Header() {
                         'w-full border-b px-4 py-3 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800',
                         !n.read && 'bg-primary-50/50 dark:bg-primary-900/20',
                       )}
-                      onClick={() => markRead(n.id)}
+                      onClick={() => markAsRead(n.id)}
                     >
                       <p className="font-medium">{n.title}</p>
                       <p className="text-xs text-slate-500">{n.message}</p>
-                      <p className="mt-1 text-xs text-slate-400">{dayjs(n.createdAt).fromNow()}</p>
+                      <p className="mt-1 text-xs text-slate-400">{dayjs(n.created_at).fromNow()}</p>
                     </button>
                   ))}
                 </span>

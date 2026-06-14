@@ -58,8 +58,8 @@ export function UserDetailPage() {
     }
     setLoading(true)
     Promise.all([
-      usersService.findOne(userId).then((r) => r.data),
-      packagesService.findAll().then((r) => r.data),
+      usersService.findOne(userId),
+      packagesService.findAll(),
     ])
       .then(([u, p]) => {
         setUser(u)
@@ -123,7 +123,7 @@ export function UserDetailPanel({ user, packages: propPackages = [], showBackLin
     if (propPackages.length > 0) {
       setPackages(propPackages)
     } else {
-      packagesService.findAll().then((r) => setPackages(r.data)).catch(() => {})
+      packagesService.findAll().then(setPackages).catch(() => {})
     }
   }, [propPackages])
 

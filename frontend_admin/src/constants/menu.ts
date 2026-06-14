@@ -25,18 +25,18 @@ export interface MenuItem {
 }
 
 export const MENU_ITEMS: MenuItem[] = [
-  { id: 'dashboard', label: 'Dashboard', path: '/', icon: LayoutDashboard, roles: ['admin', 'manager', 'staff', 'technician'] },
-  { id: 'users', label: 'Users', path: '/users', icon: Users, roles: ['admin', 'manager', 'staff'] },
-  { id: 'subscriptions', label: 'Subscriptions', path: '/subscriptions', icon: Wallet, roles: ['admin', 'manager', 'staff'] },
-  { id: 'packages', label: 'Packages', path: '/packages', icon: CreditCard, roles: ['admin', 'manager'] },
-  { id: 'regions', label: 'Regions', path: '/regions', icon: MapPinned, roles: ['admin', 'manager', 'technician'] },
-  { id: 'employees', label: 'Employees', path: '/employees', icon: BadgeDollarSign, roles: ['admin', 'manager'] },
-  { id: 'expenses', label: 'Expenses', path: '/expenses', icon: Receipt, roles: ['admin', 'manager'] },
-  { id: 'income', label: 'Income Changes', path: '/income-changes', icon: TrendingUp, roles: ['admin', 'manager'] },
-  { id: 'installation-rules', label: 'Installation Rules', path: '/installation-rules', icon: Wrench, roles: ['admin'] },
-  { id: 'subscription-rules', label: 'Subscription Rules', path: '/subscription-rules', icon: ScrollText, roles: ['admin'] },
-  { id: 'reports', label: 'Reports', path: '/reports', icon: FileText, roles: ['admin', 'manager'] },
-  { id: 'settings', label: 'Settings', path: '/settings', icon: Settings, roles: ['admin'] },
+  { id: 'dashboard', label: 'Dashboard', path: '/', icon: LayoutDashboard, roles: ['super_admin', 'admin', 'manager', 'staff', 'technician'] },
+  { id: 'users', label: 'Users', path: '/users', icon: Users, roles: ['super_admin', 'admin', 'manager', 'staff'] },
+  { id: 'subscriptions', label: 'Subscriptions', path: '/subscriptions', icon: Wallet, roles: ['super_admin', 'admin', 'manager', 'staff'] },
+  { id: 'packages', label: 'Packages', path: '/packages', icon: CreditCard, roles: ['super_admin', 'admin', 'manager'] },
+  { id: 'regions', label: 'Regions', path: '/regions', icon: MapPinned, roles: ['super_admin', 'admin', 'manager', 'technician'] },
+  { id: 'employees', label: 'Employees', path: '/employees', icon: BadgeDollarSign, roles: ['super_admin', 'admin', 'manager'] },
+  { id: 'expenses', label: 'Expenses', path: '/expenses', icon: Receipt, roles: ['super_admin', 'admin', 'manager'] },
+  { id: 'income', label: 'Income Changes', path: '/income-changes', icon: TrendingUp, roles: ['super_admin', 'admin', 'manager'] },
+  { id: 'installation-rules', label: 'Installation Rules', path: '/installation-rules', icon: Wrench, roles: ['super_admin', 'admin'] },
+  { id: 'subscription-rules', label: 'Subscription Rules', path: '/subscription-rules', icon: ScrollText, roles: ['super_admin', 'admin'] },
+  { id: 'reports', label: 'Reports', path: '/reports', icon: FileText, roles: ['super_admin', 'admin', 'manager'] },
+  { id: 'settings', label: 'Settings', path: '/settings', icon: Settings, roles: ['super_admin', 'admin'] },
 ]
 
 export const LOGOUT_ITEM = { id: 'logout', label: 'Logout', icon: LogOut }

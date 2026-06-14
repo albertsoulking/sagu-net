@@ -46,6 +46,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
         ? exception.message
         : 'Internal server error';
 
+    console.error('AllExceptionsFilter caught:', exception);
+
     response.status(status).json({
       success: false,
       message,

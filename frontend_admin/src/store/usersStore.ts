@@ -20,6 +20,9 @@ interface UsersState {
   isLoading: boolean
   fetchUsers: (params?: Record<string, any>) => Promise<void>
   setUsers: (users: UserItem[]) => void
+  updateUser: (id: string | number, data: Partial<UserItem>) => void
+  deleteUser: (id: string | number) => void
+  addUser: (user: UserItem) => void
 }
 
 export const useUsersStore = create<UsersState>((set) => ({
@@ -46,4 +49,19 @@ export const useUsersStore = create<UsersState>((set) => ({
   },
 
   setUsers: (users) => set({ users }),
+
+  updateUser: (id, data) =>
+    set((state) => ({
+      users: state.users.map((u) => (u.id === id ? { ...u, ...data } : u)),
+    })),
+
+  deleteUser: (id) =>
+    set((state) => ({
+      users: state.users.filter((u) => u.id !== id),
+    })),
+
+  addUser: (user) =>
+    set((state) => ({
+      users: [user, ...state.users],
+    })),
 }))

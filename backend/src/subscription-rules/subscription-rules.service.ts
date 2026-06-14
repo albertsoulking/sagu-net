@@ -15,14 +15,15 @@ export class SubscriptionRulesService {
   }
 
   async create(dto: Partial<SubscriptionRule>, userId?: number) {
-    const rule = this.rulesRepository.create({ ...dto, created_by: userId });
+    const rule = new SubscriptionRule();
+    Object.assign(rule, dto, { created_by: userId });
     return this.rulesRepository.save(rule);
   }
 
   async update(id: number, dto: Partial<SubscriptionRule>, userId?: number) {
     const rule = await this.rulesRepository.findOne({ where: { id } });
     if (!rule) throw new NotFoundException('Rule not found');
-    Object.assign(rule, { ...dto, updated_by: userId });
+    Object.assign(rule, dto, { updated_by: userId });
     return this.rulesRepository.save(rule);
   }
 

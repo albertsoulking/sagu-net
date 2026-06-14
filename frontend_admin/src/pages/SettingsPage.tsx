@@ -9,8 +9,7 @@ import { Input } from '@/components/ui/Input'
 
 export function SettingsPage() {
   const { isDark, setDark } = useThemeStore()
-  const settings = useSettingsStore()
-  const { fetch, update, companyName, currency, tax, isLoading } = settings
+  const { settings, fetch, update, isLoading } = useSettingsStore()
 
   useEffect(() => {
     fetch()
@@ -25,9 +24,9 @@ export function SettingsPage() {
         <Card>
           <h3 className="mb-4 font-semibold">Company</h3>
           <span className="space-y-4">
-            <Input label="Company Name" value={companyName} onChange={(e) => update({ companyName: e.target.value })} />
-            <Input label="Currency" value={currency} onChange={(e) => update({ currency: e.target.value })} />
-            <Input label="Tax (%)" type="number" value={tax} onChange={(e) => update({ tax: Number(e.target.value) })} />
+            <Input label="Company Name" value={settings['companyName'] ?? ''} onChange={(e) => update('companyName', e.target.value)} />
+            <Input label="Currency" value={settings['currency'] ?? ''} onChange={(e) => update('currency', e.target.value)} />
+            <Input label="Tax (%)" type="number" value={settings['tax'] ?? ''} onChange={(e) => update('tax', String(e.target.value))} />
           </span>
         </Card>
         <Card>
@@ -49,8 +48,8 @@ export function SettingsPage() {
                 {label}
                 <input
                   type="checkbox"
-                  checked={settings[key]}
-                  onChange={(e) => update({ [key]: e.target.checked })}
+                  checked={settings[key] === 'true'}
+                  onChange={(e) => update(key, String(e.target.checked))}
                   className="h-5 w-5 rounded"
                 />
               </label>

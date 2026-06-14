@@ -45,13 +45,13 @@ interface SummaryData {
   revenue: number
   expense: number
   profit: number
-  dailyRenewals: { name: string; value: number }[]
+  dailyRenewals: number
 }
 
 interface ChartResponse {
-  monthlyRevenue: { name: string; value: number }[]
-  monthlyExpenses: { name: string; value: number }[]
-  packageStats: { name: string; value: number }[]
+  monthlyRevenue: { month: string; revenue: number }[]
+  monthlyExpenses: { month: string; expense: number }[]
+  packageStats: { name: string; count: number }[]
 }
 
 interface ActivityItem {
@@ -85,33 +85,29 @@ export function DashboardPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const [summaryRes, chartsRes, activitiesRes] = await Promise.all([
+      const [summaryData, chartsData, rawActivities] = await Promise.all([
         dashboardService.getSummary(),
         dashboardService.getCharts(),
         dashboardService.getRecentActivities(),
       ])
 
-      const summaryData: SummaryData = summaryRes.data
-      const chartsData: ChartResponse = chartsRes.data
-      const rawActivities: { id: string; type: string; user: string; package: string; amount: number; date: string }[] = activitiesRes.data
-
       setStats(summaryData)
       setCharts({
         revenueExpense: chartsData.monthlyRevenue.map((m, i) => ({
-          name: m.name,
-          revenue: m.value,
-          expense: chartsData.monthlyExpenses[i]?.value ?? 0,
+          name: m.month,
+          revenue: m.revenue,
+          expense: chartsData.monthlyExpenses[i]?.expense ?? 0,
         })),
-        dailyRenewals: summaryData.dailyRenewals,
-        packageDistribution: chartsData.packageStats,
+        dailyRenewals: [{ name: 'Today', value: summaryData.dailyRenewals }],
+        packageDistribution: chartsData.packageStats.map((p) => ({ name: p.name, value: p.count })),
         userStatus: [
           { name: 'Active', value: summaryData.activeUsers },
           { name: 'Expired', value: summaryData.expiredUsers },
           { name: 'Suspended', value: summaryData.suspendedUsers },
         ],
         monthlyProfit: chartsData.monthlyRevenue.map((m, i) => ({
-          name: m.name,
-          value: m.value - (chartsData.monthlyExpenses[i]?.value ?? 0),
+          name: m.month,
+          value: m.revenue - (chartsData.monthlyExpenses[i]?.expense ?? 0),
         })),
       })
       setActivities(

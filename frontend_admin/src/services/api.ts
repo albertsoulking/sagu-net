@@ -19,9 +19,10 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => {
-    if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
-      response.data = response.data
-    }
+      if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
+        const { data, meta } = response.data
+        response.data = meta ? { data, meta } : data
+      }
     return response
   },
   (error) => {

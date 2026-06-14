@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { SubscriptionRulesService } from './subscription-rules.service';
+import { CreateSubscriptionRuleDto } from './dto/create-subscription-rule.dto';
+import { UpdateSubscriptionRuleDto } from './dto/update-subscription-rule.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
 
@@ -19,13 +21,13 @@ export class SubscriptionRulesController {
 
   @Post()
   @ApiOperation({ summary: 'Create subscription rule' })
-  create(@Body() dto: any, @CurrentUser('id') userId: number) {
+  create(@Body() dto: CreateSubscriptionRuleDto, @CurrentUser('id') userId: number) {
     return this.subscriptionRulesService.create(dto, userId);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update subscription rule' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: any, @CurrentUser('id') userId: number) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateSubscriptionRuleDto, @CurrentUser('id') userId: number) {
     return this.subscriptionRulesService.update(id, dto, userId);
   }
 

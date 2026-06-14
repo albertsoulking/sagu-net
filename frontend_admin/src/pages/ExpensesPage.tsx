@@ -26,7 +26,7 @@ export function ExpensesPage() {
   useEffect(() => {
     Promise.all([expensesService.findAll(), expensesService.getCategories()]).then(([e, c]) => {
       setExpenses(e.data)
-      setChartData(c.data.map((d: { name: string; value?: number }) => ({ name: d.name, value: d.value ?? 0 })))
+      setChartData(c.map((d: { name: string; value?: number }) => ({ name: d.name, value: d.value ?? 0 })))
       setLoading(false)
     })
   }, [])

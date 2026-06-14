@@ -18,7 +18,7 @@ export function PackagesPage() {
   const [form, setForm] = useState({ plan: '', basePrice: 0, category: 'Residential' })
 
   useEffect(() => {
-    packagesService.findAll().then((res) => { setPackages(res.data); setLoading(false) })
+    packagesService.findAll().then((res) => { setPackages(res); setLoading(false) })
   }, [])
 
   if (loading) return <TableSkeleton rows={3} />
